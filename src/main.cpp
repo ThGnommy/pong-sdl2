@@ -1,4 +1,6 @@
 #include <SDL2/SDL.h>
+#include "Vec2.h"
+#include "Ball.h"
 
 // windows dimensions
 const int WINDOW_WIDTH = 1280;
@@ -14,6 +16,13 @@ int main()
   SDL_Window* window = SDL_CreateWindow("Pong", 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
 
   SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
+
+  // Create the ball
+  Ball ball(
+    Vec2((WINDOW_WIDTH / 2.0) - (BALL_WIDTH / 2.0), 
+    (WINDOW_HEIGHT / 2.0f) - (BALL_WIDTH / 2.0f))
+  );
+
 
   // Game logic
 
@@ -36,11 +45,20 @@ int main()
 
     // set the renderer window to black
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-
     // clear
     SDL_RenderClear(renderer);
 
-    // Update the screen with any rendering performed since the previous call.
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+
+    for(int y = 0; y < WINDOW_HEIGHT; y++) {
+      if(y % 5) {
+        SDL_RenderDrawPoint(renderer, WINDOW_WIDTH / 2, y);
+      }
+    }
+
+    ball.Draw(renderer);
+
+    // Present the backbuffer
     SDL_RenderPresent(renderer);
 
   }
