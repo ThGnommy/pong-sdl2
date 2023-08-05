@@ -19,6 +19,7 @@ enum Buttons {
 };
 
 const float PADDLE_SPEED = 1.0;
+const float BALL_SPEED = 1.0;
 
 int main()
 {
@@ -35,8 +36,8 @@ int main()
 
   // Create the ball
   Ball ball(
-    Vec2((WINDOW_WIDTH / 2.0) - (BALL_WIDTH / 2.0), 
-    (WINDOW_HEIGHT / 2.0f) - (BALL_WIDTH / 2.0f))
+    Vec2((WINDOW_WIDTH / 2.0) - (BALL_WIDTH / 2.0),  (WINDOW_HEIGHT / 2.0f) - (BALL_WIDTH / 2.0f)),
+    Vec2(BALL_SPEED, 0.0)
   );
 
   // Create paddles
@@ -164,6 +165,9 @@ int main()
     // Update the paddle positions
     paddleOne.Update(deltatime);
     paddleTwo.Update(deltatime);
+    
+    // Update the ball position
+    ball.Update(deltatime);
 
     // Present the backbuffer
     SDL_RenderPresent(renderer);
