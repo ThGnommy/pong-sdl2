@@ -1,3 +1,4 @@
+#include <chrono>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include "Vec2.h"
@@ -5,9 +6,19 @@
 #include "Paddle.h"
 #include "PlayerScore.h"
 
+
 // windows dimensions
 const int WINDOW_WIDTH = 1280;
 const int WINDOW_HEIGHT = 720;
+
+enum Buttons {
+  PaddleOneUp = 0,
+  PaddleOneDown,
+  PaddleTwoUp,
+  PaddleTwoDown
+};
+
+const float PADDLE_SPEED = 1.0;
 
 int main()
 {
@@ -30,11 +41,14 @@ int main()
 
   // Create paddles
   Paddle paddleOne(
-    Vec2(50.0, (WINDOW_HEIGHT / 2.0) - (PADDLE_HEIGHT / 2.0))
+    Vec2(50.0, (WINDOW_HEIGHT / 2.0) - (PADDLE_HEIGHT / 2.0)),
+    Vec2(0.0, 0.0)
   );
-  
+
+
   Paddle paddleTwo(
-    Vec2((WINDOW_WIDTH - 50.0 - PADDLE_WIDTH), (WINDOW_HEIGHT / 2.0) - (PADDLE_HEIGHT / 2.0))
+    Vec2((WINDOW_WIDTH - 50.0 - PADDLE_WIDTH), (WINDOW_HEIGHT / 2.0) - (PADDLE_HEIGHT / 2.0)),
+    Vec2(0.0, 0.0)
   );
 
   // Create the player score text fields
@@ -45,20 +59,52 @@ int main()
   PlayerScore playerTwoScoreText(scoreTwoPosition, renderer, scoreFont);
 
   // Game logic
-  bool running = true;
 
-  // game loop
+  bool buttons[4] = {};
+
+  bool running = true;
+  float deltatime = 0.0f;
+
+  /*
+    game loop 👇
+  */
+
   while(running) {
+
+    auto startTime = std::chrono::high_resolution_clock::now();
+
     SDL_Event event;
 
     // watch if the user press the escape key
     while(SDL_PollEvent(&event)) {
       if(event.type == SDL_QUIT) {
         running = false;
-      } else if(event.type == SDL_KEYDOWN) {
+      } 
+      else if(event.type == SDL_KEYDOWN) 
+      {
         if(event.key.keysym.sym == SDLK_ESCAPE) {
           running = false;
         }
+
+        if(event.key.keysym.sym == SDLK_w)
+          buttons[Buttons::PaddleOneUp] = true;  
+        else if(event.key.keysym.sym == SDLK_s)
+          buttons[Buttons::PaddleOneDown] = true;
+        else if(event.key.keysym.sym == SDLK_UP)
+          buttons[Buttons::PaddleTwoUp] = true;
+        else if(event.key.keysym.sym == SDLK_DOWN)
+          buttons[Buttons::PaddleTwoDown] = true;
+      }
+      else if (event.type == SDL_KEYUP)
+      {
+        if(event.key.keysym.sym == SDLK_w)
+          buttons[Buttons::PaddleOneUp] = false;  
+        else if(event.key.keysym.sym == SDLK_s)
+          buttons[Buttons::PaddleOneDown] = false;
+        else if(event.key.keysym.sym == SDLK_UP)
+          buttons[Buttons::PaddleTwoUp] = false;
+        else if(event.key.keysym.sym == SDLK_DOWN)
+          buttons[Buttons::PaddleTwoDown] = false;
       }
     }
 
@@ -86,9 +132,45 @@ int main()
     playerOneScoreText.Draw();
     playerTwoScoreText.Draw();
 
+
+    // handle keys
+
+    if (buttons[Buttons::PaddleOneUp])
+    {
+      paddleOne.velocity.y = -PADDLE_SPEED;
+    }
+    else if (buttons[Buttons::PaddleOneDown])
+    {
+      paddleOne.velocity.y = PADDLE_SPEED;
+    }
+    else
+    {
+      paddleOne.velocity.y = 0.0f;
+    }
+
+    if (buttons[Buttons::PaddleTwoUp])
+    {
+      paddleTwo.velocity.y = -PADDLE_SPEED;
+    }
+    else if (buttons[Buttons::PaddleTwoDown])
+    {
+      paddleTwo.velocity.y = PADDLE_SPEED;
+    }
+    else
+    {
+      paddleTwo.velocity.y = 0.0f;
+    }
+
+    // Update the paddle positions
+    paddleOne.Update(deltatime);
+    paddleTwo.Update(deltatime);
+
     // Present the backbuffer
     SDL_RenderPresent(renderer);
 
+    // Calculate frame time
+    auto stopTime = std::chrono::high_resolution_clock::now();
+    deltatime = std::chrono::duration<float, std::chrono::milliseconds::period>(stopTime - startTime).count();
   }
 
   // Cleanup
