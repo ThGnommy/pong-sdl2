@@ -1,3 +1,4 @@
+#include <iostream>
 #include <chrono>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
@@ -19,11 +20,44 @@ enum Buttons {
 };
 
 const float PADDLE_SPEED = 1.0;
-const float BALL_SPEED = 1.0;
+const float BALL_SPEED = 0.2;
+
+bool CheckPaddleCollision(Ball const& ball, Paddle const& paddle) {
+	float ballLeft = ball.position.x;
+	float ballRight = ball.position.x + BALL_WIDTH;
+	float ballTop = ball.position.y;
+	float ballBottom = ball.position.y + BALL_HEIGHT;
+
+	float paddleLeft = paddle.position.x;
+	float paddleRight = paddle.position.x + PADDLE_WIDTH;
+	float paddleTop = paddle.position.y;
+	float paddleBottom = paddle.position.y + PADDLE_HEIGHT;
+
+	if (ballLeft >= paddleRight)
+	{
+		return false;
+	}
+
+	if (ballRight <= paddleLeft)
+	{
+		return false;
+	}
+
+	if (ballTop >= paddleBottom)
+	{
+		return false;
+	}
+
+	if (ballBottom <= paddleTop)
+	{
+		return false;
+	}
+
+	return true;
+}
 
 int main()
 {
-
   // Initialize SDL components
   SDL_Init(SDL_INIT_VIDEO);
   TTF_Init();
@@ -165,7 +199,13 @@ int main()
     // Update the paddle positions
     paddleOne.Update(deltatime);
     paddleTwo.Update(deltatime);
-    
+
+    // Check collisions
+    if (CheckPaddleCollision(ball, paddleOne) ||
+      CheckPaddleCollision(ball, paddleTwo)) {
+      ball.velocity.x = -ball.velocity.x;
+    }
+
     // Update the ball position
     ball.Update(deltatime);
 
