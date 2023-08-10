@@ -2,6 +2,7 @@
 #include <chrono>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 #include "Vec2.h"
 #include "Ball.h"
 #include "Paddle.h"
@@ -114,6 +115,8 @@ int main()
   // Initialize SDL components
   SDL_Init(SDL_INIT_VIDEO);
   TTF_Init();
+  // we don't need 44100
+  Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 1, 2048);
 
   SDL_Window* window = SDL_CreateWindow("Pong", 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
   SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
@@ -145,6 +148,10 @@ int main()
 
   Vec2 scoreTwoPosition = Vec2(3 * WINDOW_WIDTH / 4, 20);
   PlayerScore playerTwoScoreText(scoreTwoPosition, renderer, scoreFont);
+
+  // Inizialize sound effects
+  Mix_Chunk* wallHitSound = Mix_LoadWAV("/sounds/sfx_wall_hit.wav");
+  Mix_Chunk* paddleHitSound = Mix_LoadWAV("/sounds/sfx_paddle_hit.wav");
 
   // Game logic
 
@@ -256,13 +263,16 @@ int main()
     paddleOne.Update(deltatime);
     paddleTwo.Update(deltatime);
 
+    // check for collisions
     Contact contact = CheckPaddleCollision(ball, paddleOne);
     if (contact.type != CollisionType::None) {
       ball.CollideWithPaddle(contact);
+      Mix_PlayChannel(-1, paddleHitSound, 0);
     } 
     else if (contact = CheckPaddleCollision(ball, paddleTwo);
       contact.type != CollisionType::None) {
         ball.CollideWithPaddle(contact);
+        Mix_PlayChannel(-1, paddleHitSound, 0);
     }
     else if (contact = CheckWallCollision(ball);
     contact.type != CollisionType::None)
@@ -281,6 +291,9 @@ int main()
 
         playerOneScoreText.SetScore(playerOneScore);
       }
+      else {
+        Mix_PlayChannel(-1, wallHitSound, 0);
+      }
     }
 
 
@@ -296,11 +309,14 @@ int main()
   }
 
   // Cleanup
+  Mix_FreeChunk(wallHitSound);
+  Mix_FreeChunk(paddleHitSound);
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
 
   // Clear fonts
   TTF_CloseFont(scoreFont);
+  Mix_Quit();
   TTF_Quit();
   SDL_Quit();
 
