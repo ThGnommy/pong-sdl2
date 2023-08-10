@@ -20,9 +20,10 @@ enum Buttons {
 };
 
 const float PADDLE_SPEED = 1.0;
-const float BALL_SPEED = 0.2;
+float const BALL_SPEED = 0.5f;
 
-bool CheckPaddleCollision(Ball const& ball, Paddle const& paddle) {
+
+Contact CheckPaddleCollision(Ball const& ball, Paddle const& paddle) {
 	float ballLeft = ball.position.x;
 	float ballRight = ball.position.x + BALL_WIDTH;
 	float ballTop = ball.position.y;
@@ -33,27 +34,79 @@ bool CheckPaddleCollision(Ball const& ball, Paddle const& paddle) {
 	float paddleTop = paddle.position.y;
 	float paddleBottom = paddle.position.y + PADDLE_HEIGHT;
 
+  Contact contact{};
+
 	if (ballLeft >= paddleRight)
 	{
-		return false;
+		return contact;
 	}
 
 	if (ballRight <= paddleLeft)
 	{
-		return false;
+		return contact;
 	}
 
 	if (ballTop >= paddleBottom)
 	{
-		return false;
+		return contact;
 	}
 
 	if (ballBottom <= paddleTop)
 	{
-		return false;
+		return contact;
 	}
 
-	return true;
+  float paddleRangeUpper = paddleBottom - (2.0 * PADDLE_HEIGHT / 3.0);
+  float paddleRangeMiddle = paddleBottom - (PADDLE_HEIGHT / 3.0);
+
+  if (ball.velocity.x < 0) {
+    // left paddle
+    contact.penetration = paddleRight - ballLeft;
+  } else if (ball.velocity.x > 0) {
+    // right paddle
+    contact.penetration = paddleLeft - ballRight;
+  }
+
+  if ((ballBottom > paddleTop) && (ballBottom < paddleRangeUpper)) {
+    contact.type = CollisionType::Top;
+  } else if ((ballBottom > paddleRangeUpper) && (ballBottom < paddleRangeMiddle)) {
+    contact.type = CollisionType::Middle;
+  } else {
+    contact.type = CollisionType::Bottom;
+  }
+
+	return contact;
+}
+
+Contact CheckWallCollision(Ball const& ball)
+{
+	float ballLeft = ball.position.x;
+	float ballRight = ball.position.x + BALL_WIDTH;
+	float ballTop = ball.position.y;
+	float ballBottom = ball.position.y + BALL_HEIGHT;
+
+	Contact contact{};
+
+	if (ballLeft < 0.0f)
+	{
+		contact.type = CollisionType::Left;
+	}
+	else if (ballRight > WINDOW_WIDTH)
+	{
+		contact.type = CollisionType::Right;
+	}
+	else if (ballTop < 0.0f)
+	{
+		contact.type = CollisionType::Top;
+		contact.penetration = -ballTop;
+	}
+	else if (ballBottom > WINDOW_HEIGHT)
+	{
+		contact.type = CollisionType::Bottom;
+		contact.penetration = WINDOW_HEIGHT - ballBottom;
+	}
+
+	return contact;
 }
 
 int main()
@@ -96,6 +149,9 @@ int main()
   // Game logic
 
   bool buttons[4] = {};
+
+  int playerOneScore = 0;
+  int playerTwoScore = 0;
 
   bool running = true;
   float deltatime = 0.0f;
@@ -200,11 +256,33 @@ int main()
     paddleOne.Update(deltatime);
     paddleTwo.Update(deltatime);
 
-    // Check collisions
-    if (CheckPaddleCollision(ball, paddleOne) ||
-      CheckPaddleCollision(ball, paddleTwo)) {
-      ball.velocity.x = -ball.velocity.x;
+    Contact contact = CheckPaddleCollision(ball, paddleOne);
+    if (contact.type != CollisionType::None) {
+      ball.CollideWithPaddle(contact);
+    } 
+    else if (contact = CheckPaddleCollision(ball, paddleTwo);
+      contact.type != CollisionType::None) {
+        ball.CollideWithPaddle(contact);
     }
+    else if (contact = CheckWallCollision(ball);
+    contact.type != CollisionType::None)
+    {
+      ball.CollideWithWalls(contact);
+
+      if (contact.type == CollisionType::Left)
+      {
+        ++playerTwoScore;
+
+        playerTwoScoreText.SetScore(playerTwoScore);
+      }
+      else if (contact.type == CollisionType::Right)
+      {
+        ++playerOneScore;
+
+        playerOneScoreText.SetScore(playerOneScore);
+      }
+    }
+
 
     // Update the ball position
     ball.Update(deltatime);

@@ -1,3 +1,4 @@
+#include <iostream>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include "PlayerScore.h"
@@ -33,3 +34,18 @@ void PlayerScore::Draw() {
   creates a texture from that surface which is what is actually drawn
   to the screen.
 */
+
+void PlayerScore::SetScore(int score)
+{
+  // first frees the old surface and texture
+  SDL_FreeSurface(surface);
+  SDL_DestroyTexture(texture);
+
+  surface = TTF_RenderText_Solid(font, std::to_string(score).c_str(), {255, 255, 255, 255});
+  texture = SDL_CreateTextureFromSurface(renderer, surface);
+
+  int width, height;
+  SDL_QueryTexture(texture, nullptr, nullptr, &width, &height);
+  rect.w = width;
+  rect.h = height;
+}
